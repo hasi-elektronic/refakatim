@@ -21,7 +21,7 @@ step() { printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m⚠ %s\033[0m\n' "$*"; }
 
 step "Token kontrolü"
-cf "$API/accounts/$ACC/tokens/verify" | js 'j.success' | grep -q true || { echo "Token geçersiz"; exit 1; }
+{ cf "$API/user/tokens/verify" 2>/dev/null || cf "$API/accounts/$ACC/tokens/verify"; } | js 'j.success' | grep -q true || { echo "Token geçersiz"; exit 1; }
 
 step "Email Routing kontrolü ($ZONE_NAME)"
 ZONE_ID=$(cf "$API/zones?name=$ZONE_NAME" | js 'j.result[0]?.id')
