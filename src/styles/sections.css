@@ -231,3 +231,4 @@
 .next{list-style:none;margin:1.6rem 0;padding:0;display:grid;gap:.8rem}
 .next li{display:flex;gap:.8rem;align-items:center;color:var(--c-ink-2)}
 .next span{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;background:var(--c-mint);color:var(--c-brand);font:700 .95rem/1 var(--ff-head)}
+.hp{position:absolute!important;left:-10000px;width:1px;height:1px;overflow:hidden}

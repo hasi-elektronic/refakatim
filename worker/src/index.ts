@@ -5,7 +5,7 @@ export interface Env {
   DB: D1Database;
   RATE: KVNamespace;
   MAILER: SendEmail;
-  TURNSTILE_SECRET: string;
+  TURNSTILE_SECRET?: string;
   IP_SALT: string;
   ALLOWED_ORIGINS: string;   // comma separated
   MAIL_FROM: string;
@@ -74,9 +74,17 @@ export default {
     let body: Record<string, unknown>;
     try { body = (await req.json()) as Record<string, unknown>; } catch { return json(400, { ok: false, error: 'bad_json' }, h); }
 
-    const token = typeof body.token === 'string' ? body.token : '';
-    if (!token || !(await verifyTurnstile(token, ip, env.TURNSTILE_SECRET))) {
-      return json(403, { ok: false, error: 'captcha' }, h);
+    // bot protection: honeypot + human fill time always; Turnstile when configured
+    const hp = typeof body.website === 'string' ? body.website.trim() : '';
+    const elapsed = Date.now() - Number(body.t ?? 0);
+    if (hp || !Number.isFinite(elapsed) || elapsed < 3000 || elapsed > 86_400_000) {
+      return json(403, { ok: false, error: 'bot' }, h);
+    }
+    if (env.TURNSTILE_SECRET) {
+      const token = typeof body.token === 'string' ? body.token : '';
+      if (!token || !(await verifyTurnstile(token, ip, env.TURNSTILE_SECRET))) {
+        return json(403, { ok: false, error: 'captcha' }, h);
+      }
     }
 
     const v = validate(kind, body);

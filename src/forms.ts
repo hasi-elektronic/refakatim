@@ -1,5 +1,6 @@
 const API = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 const SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? '';
+const LOADED_AT = Date.now();
 
 type Kind = 'contact' | 'apply';
 type Turnstile = { render: (el: HTMLElement, o: Record<string, unknown>) => string; reset: (id: string) => void };
@@ -123,7 +124,7 @@ export function initForms() {
     }, { rootMargin: '400px' });
     io.observe(section);
   }
-  if (!API || !SITE_KEY) {
+  if (!API) {
     forms.forEach((f) => {
       const warn = document.createElement('p');
       warn.className = 'form__dev';
@@ -144,14 +145,14 @@ export function initForms() {
       status.className = 'form__status';
       status.textContent = '';
       if (!validate(form)) return;
-      if (!API || !SITE_KEY) {
+      if (!API) {
         status.classList.add('is-err');
         status.textContent = 'Gönderim henüz etkin değil. Lütfen daha sonra tekrar deneyin.';
         return;
       }
       const fd = new FormData(form);
       const token = String(fd.get('cf-turnstile-response') ?? '');
-      if (!token) {
+      if (SITE_KEY && !token) {
         status.classList.add('is-err');
         status.textContent = 'Lütfen güvenlik doğrulamasının tamamlanmasını bekleyin.';
         return;
@@ -168,7 +169,7 @@ export function initForms() {
         const r = await fetch(`${API}/api/${kind}`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ ...payload, token }),
+          body: JSON.stringify({ ...payload, token, t: LOADED_AT }),
         });
         const j = (await r.json().catch(() => ({}))) as { ok?: boolean; errors?: Record<string, string>; error?: string };
         if (r.ok && j.ok) {

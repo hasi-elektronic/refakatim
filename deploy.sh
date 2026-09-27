@@ -99,7 +99,7 @@ fi
 step "Doğrulama"
 sleep 5
 printf 'Site: '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/"
-printf 'Impressum: '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/impressum.html"
+printf 'Impressum: '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/impressum"
 curl -s "https://$SLUG.pages.dev/" | grep -c 'og:image' | sed 's/^/OG tags: /'
 
 cat <<EOF
