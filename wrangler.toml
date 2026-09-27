@@ -1,0 +1,8 @@
+# Cloudflare Pages project config (site). The API Worker lives in ./worker.
+name = "refakatim"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"
+
+[[services]]
+binding = "API"
+service = "refakatim-api"

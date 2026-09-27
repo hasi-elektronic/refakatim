@@ -52,7 +52,7 @@ export default {
     const h = cors(origin, env);
 
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
-    if (url.pathname === '/health') return json(200, { ok: true }, h);
+    if (url.pathname === '/health' || url.pathname === '/api/health') return json(200, { ok: true }, h);
 
     const kind = ({ '/api/contact': 'contact', '/api/apply': 'apply' } as Record<string, Kind>)[url.pathname];
     if (!kind) return json(404, { ok: false, error: 'not_found' }, h);

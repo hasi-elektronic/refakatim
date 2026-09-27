@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://refakatim.pages.dev/sitemap.xml
+Sitemap: https://refakatim.hasi-elektronic.de/sitemap.xml

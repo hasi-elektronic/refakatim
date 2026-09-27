@@ -14,6 +14,7 @@ GH_ORG="hasi-elektronic"
 SLUG="refakatim"
 ZONE_NAME="hasi-elektronic.de"
 MAIL_TO="info@hasi-elektronic.de"
+HOST="$SLUG.hasi-elektronic.de"
 
 cf() { curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$@"; }
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);const v=($1);process.stdout.write(v==null?'':String(v))})"; }
@@ -24,7 +25,8 @@ step "Token kontrolü"
 { cf "$API/user/tokens/verify" 2>/dev/null || cf "$API/accounts/$ACC/tokens/verify"; } | js 'j.success' | grep -q true || { echo "Token geçersiz"; exit 1; }
 
 step "Email Routing kontrolü ($ZONE_NAME)"
-ZONE_ID=$(cf "$API/zones?name=$ZONE_NAME" 2>/dev/null | js 'j.result[0]?.id' || true)
+ZONE_ID="${CLOUDFLARE_ZONE_ID:-}"
+[ -n "$ZONE_ID" ] || ZONE_ID=$(cf "$API/zones?name=$ZONE_NAME" 2>/dev/null | js 'j.result[0]?.id' || true)
 ER=$(cf "$API/zones/$ZONE_ID/email/routing" 2>/dev/null | js 'j.result?.enabled' || true)
 [ "$ER" = "true" ] && echo "Email Routing açık" || warn "Email Routing KAPALI → Dashboard > $ZONE_NAME > Email > Email Routing > Enable. Formlar yine D1'e kaydeder."
 VER=$(cf "$API/accounts/$ACC/email/routing/addresses" 2>/dev/null | js "j.result.find(a=>a.email==='$MAIL_TO')?.verified" || true)
@@ -74,13 +76,23 @@ curl -fsS "$API_URL/health" && echo
 
 step "Site build"
 npm i --silent
-VITE_API_URL="$API_URL" VITE_TURNSTILE_SITE_KEY="$SITE_KEY" npm run build
+VITE_API_URL="same-origin" VITE_TURNSTILE_SITE_KEY="$SITE_KEY" npm run build
 
 step "Cloudflare Pages"
 if ! cf "$API/accounts/$ACC/pages/projects/$SLUG" >/dev/null 2>&1; then
   cf -X POST "$API/accounts/$ACC/pages/projects" -d "{\"name\":\"$SLUG\",\"production_branch\":\"main\"}" >/dev/null
 fi
 npx --yes wrangler@4 pages deploy dist --project-name="$SLUG" --branch=main --commit-dirty=true
+
+step "Özel alan adı: $HOST"
+cf -X POST "$API/accounts/$ACC/pages/projects/$SLUG/domains" -d "{\"name\":\"$HOST\"}" >/dev/null 2>&1 && echo "Pages domain eklendi" || echo "Pages domain zaten var / eklenemedi"
+if [ -n "$ZONE_ID" ]; then
+  REC=$(cf "$API/zones/$ZONE_ID/dns_records?name=$HOST" 2>/dev/null | js 'j.result[0]?.id' || true)
+  if [ -z "$REC" ]; then
+    cf -X POST "$API/zones/$ZONE_ID/dns_records" -d "{\"type\":\"CNAME\",\"name\":\"$HOST\",\"content\":\"$SLUG.pages.dev\",\"proxied\":true,\"comment\":\"Refakatim (Pages)\"}" >/dev/null && echo "DNS CNAME oluşturuldu" || warn "DNS kaydı oluşturulamadı (DNS:Edit yetkisi?) → elle: CNAME $HOST → $SLUG.pages.dev (proxied)"
+  else echo "DNS kaydı zaten var"; fi
+else warn "Zone ID yok → DNS elle: CNAME $HOST → $SLUG.pages.dev (proxied)"; fi
+cf "$API/accounts/$ACC/pages/projects/$SLUG/domains/$HOST" 2>/dev/null | js '"Domain durumu: "+j.result.status' || true
 
 if [ "${SKIP_GITHUB:-0}" != "1" ]; then
 : "${GH_TOKEN:?GH_TOKEN eksik (veya SKIP_GITHUB=1)}"
@@ -98,14 +110,16 @@ fi
 
 step "Doğrulama"
 sleep 5
-printf 'Site: '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/"
+printf 'Site (pages.dev): '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/"
+printf 'Site ($HOST): '; curl -s -o /dev/null -w "%{http_code}\n" "https://$HOST/" || true
+printf 'API proxy: '; curl -s "https://$SLUG.pages.dev/api/health" || true; echo
 printf 'Impressum: '; curl -s -o /dev/null -w "%{http_code}\n" "https://$SLUG.pages.dev/impressum"
 curl -s "https://$SLUG.pages.dev/" | grep -c 'og:image' | sed 's/^/OG tags: /'
 
 cat <<EOF
 
 ✅ Refakatim canlıda
-🌐 https://$SLUG.pages.dev
+🌐 https://$HOST  (yedek: https://$SLUG.pages.dev)
 📧 API: $API_URL
 📁 https://github.com/$GH_ORG/$SLUG
 EOF

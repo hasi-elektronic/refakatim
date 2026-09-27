@@ -4,7 +4,7 @@ compatibility_date = "2026-09-01"
 workers_dev = true
 
 [vars]
-ALLOWED_ORIGINS = "https://refakatim.pages.dev,http://localhost:5173"
+ALLOWED_ORIGINS = "https://refakatim.hasi-elektronic.de,https://refakatim.pages.dev,http://localhost:5173"
 MAIL_FROM = "refakatim@hasi-elektronic.de"
 MAIL_TO = "info@hasi-elektronic.de"
 

@@ -1,4 +1,7 @@
-const API = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+const RAW_API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+const API_ENABLED = RAW_API !== '';
+/** 'same-origin' → relative /api/* (proxied by Pages Functions) */
+const API = RAW_API === 'same-origin' ? '' : RAW_API.replace(/\/$/, '');
 const SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? '';
 const LOADED_AT = Date.now();
 
@@ -124,7 +127,7 @@ export function initForms() {
     }, { rootMargin: '400px' });
     io.observe(section);
   }
-  if (!API) {
+  if (!API_ENABLED) {
     forms.forEach((f) => {
       const warn = document.createElement('p');
       warn.className = 'form__dev';
@@ -145,7 +148,7 @@ export function initForms() {
       status.className = 'form__status';
       status.textContent = '';
       if (!validate(form)) return;
-      if (!API) {
+      if (!API_ENABLED) {
         status.classList.add('is-err');
         status.textContent = 'Gönderim henüz etkin değil. Lütfen daha sonra tekrar deneyin.';
         return;
