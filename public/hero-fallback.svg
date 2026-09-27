@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="l" x1="0" x2="1"><stop offset="0" stop-color="#5EEAD4" stop-opacity="0"/><stop offset=".15" stop-color="#5EEAD4"/><stop offset=".85" stop-color="#99F6E4"/><stop offset="1" stop-color="#99F6E4" stop-opacity="0"/></linearGradient>
+    <filter id="g" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".3"/></filter>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 530 H250 l20-26 16 26 H420 l14-10 12 10 12 -170 16 230 14-60 H660 l20 -30 22 30 H900 l14-10 12 10 12 -170 16 230 14-60 H1200" stroke="#14B8A6" stroke-opacity=".35" stroke-width="3" transform="translate(0 30)"/>
+    <path d="M0 530 H250 l20-26 16 26 H420 l14-10 12 10 12 -170 16 230 14-60 H660 l20 -30 22 30 H900 l14-10 12 10 12 -170 16 230 14-60 H1200" stroke="url(#l)" stroke-width="10" filter="url(#g)" opacity=".7"/>
+    <path d="M0 530 H250 l20-26 16 26 H420 l14-10 12 10 12 -170 16 230 14-60 H660 l20 -30 22 30 H900 l14-10 12 10 12 -170 16 230 14-60 H1200" stroke="url(#l)" stroke-width="3"/>
+  </g>
+  <g font-family="Space Grotesk, Inter, system-ui, sans-serif" filter="url(#s)">
+    <g transform="translate(770 120) rotate(-3)"><rect width="250" height="110" rx="20" fill="#fff" fill-opacity=".96"/><rect x="18" y="22" width="5" height="66" rx="2.5" fill="#14B8A6"/><text x="38" y="46" font-size="22" font-weight="700" fill="#0F766E">14.00</text><text x="38" y="74" font-size="19" font-weight="600" fill="#0B1F23" font-family="Inter, system-ui, sans-serif">Tansiyon</text><text x="38" y="96" font-size="14" fill="#3B5157" font-family="Inter, system-ui, sans-serif">ölçüldü · kayda geçti</text></g>
+    <g transform="translate(900 270) rotate(2)"><rect width="250" height="110" rx="20" fill="#fff" fill-opacity=".96"/><rect x="18" y="22" width="5" height="66" rx="2.5" fill="#F59E0B"/><text x="38" y="46" font-size="22" font-weight="700" fill="#0F766E">18.00</text><text x="38" y="74" font-size="19" font-weight="600" fill="#0B1F23" font-family="Inter, system-ui, sans-serif">Ateş yükseldi</text><text x="38" y="96" font-size="14" fill="#B45309" font-family="Inter, system-ui, sans-serif">hemşireye bildirildi</text></g>
+    <g transform="translate(760 580) rotate(-1.5)"><rect width="250" height="110" rx="20" fill="#fff" fill-opacity=".96"/><rect x="18" y="22" width="5" height="66" rx="2.5" fill="#14B8A6"/><text x="38" y="46" font-size="22" font-weight="700" fill="#0F766E">07.00</text><text x="38" y="74" font-size="19" font-weight="600" fill="#0B1F23" font-family="Inter, system-ui, sans-serif">Devir raporu</text><text x="38" y="96" font-size="14" fill="#3B5157" font-family="Inter, system-ui, sans-serif">yeni refakatçiye hazır</text></g>
+  </g>
+</svg>

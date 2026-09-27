@@ -1,0 +1,12 @@
+.legal-top{background:var(--c-deep);color:#fff;padding:1.1rem 0}
+.legal-top a{color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:.6rem;font:700 1.3rem/1 var(--ff-head);letter-spacing:-.03em}
+.legal-top svg{width:32px;height:32px}
+.legal{padding-block:3rem 5rem}
+.legal .wrap{max-width:760px}
+.legal h1{font-size:clamp(2rem,4vw,2.8rem)}
+.legal h2{font-size:1.35rem;margin-top:2.2rem}
+.legal p,.legal li{color:var(--c-ink-2)}
+.legal address{font-style:normal;line-height:1.7;margin-bottom:1rem}
+.legal .draft{margin-top:3rem;padding:1rem 1.2rem;border-radius:var(--r-sm);background:color-mix(in srgb,var(--c-warm) 14%,transparent);color:var(--c-ink);font-size:.93rem}
+.legal-foot{border-top:1px solid var(--c-line);padding:1.5rem 0;font-size:.9rem}
+.legal-foot .wrap{display:flex;gap:1.2rem;flex-wrap:wrap;max-width:760px}

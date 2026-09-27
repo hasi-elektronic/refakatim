@@ -1,0 +1,27 @@
+name = "refakatim-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://refakatim.pages.dev,http://localhost:5173"
+MAIL_FROM = "refakatim@hasi-elektronic.de"
+MAIL_TO = "info@hasi-elektronic.de"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "refakatim"
+database_id = "REPLACE_WITH_D1_ID"
+
+[[kv_namespaces]]
+binding = "RATE"
+id = "REPLACE_WITH_KV_ID"
+
+[[send_email]]
+name = "MAILER"
+destination_address = "info@hasi-elektronic.de"
+
+[triggers]
+crons = ["17 3 * * *"]
+
+# Secrets (wrangler secret put): TURNSTILE_SECRET, IP_SALT
