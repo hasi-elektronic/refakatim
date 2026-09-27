@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Refakatim — tek komutla kurulum + deploy
-# Gerekli env: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, GH_TOKEN
+# Gerekli env: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, GH_TOKEN (GitHub Actions içinde SKIP_GITHUB=1)
 # Token yetkileri (Cloudflare): Account → Cloudflare Pages:Edit, Workers Scripts:Edit, D1:Edit,
 #   Workers KV Storage:Edit, Turnstile:Edit, Email Routing Addresses:Read · Zone → Zone:Read, Email Routing Rules:Read
 set -euo pipefail
@@ -8,7 +8,6 @@ cd "$(dirname "$0")"
 
 : "${CLOUDFLARE_API_TOKEN:?CLOUDFLARE_API_TOKEN eksik}"
 : "${CLOUDFLARE_ACCOUNT_ID:?CLOUDFLARE_ACCOUNT_ID eksik}"
-: "${GH_TOKEN:?GH_TOKEN eksik}"
 ACC="$CLOUDFLARE_ACCOUNT_ID"
 API="https://api.cloudflare.com/client/v4"
 GH_ORG="hasi-elektronic"
@@ -77,6 +76,8 @@ if ! cf "$API/accounts/$ACC/pages/projects/$SLUG" >/dev/null 2>&1; then
 fi
 npx --yes wrangler@4 pages deploy dist --project-name="$SLUG" --branch=main --commit-dirty=true
 
+if [ "${SKIP_GITHUB:-0}" != "1" ]; then
+: "${GH_TOKEN:?GH_TOKEN eksik (veya SKIP_GITHUB=1)}"
 step "GitHub"
 if ! curl -fsS -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/$GH_ORG/$SLUG" >/dev/null 2>&1; then
   curl -fsS -H "Authorization: token $GH_TOKEN" "https://api.github.com/orgs/$GH_ORG/repos" \
@@ -87,6 +88,7 @@ fi
 git add -A
 git -c user.name="Hasi Elektronic" -c user.email="info@hasi-elektronic.de" commit -qm "deploy: $(date -u +%Y-%m-%dT%H:%MZ)" || true
 git push -q "https://x-access-token:$GH_TOKEN@github.com/$GH_ORG/$SLUG.git" main
+fi
 
 step "Doğrulama"
 sleep 5
