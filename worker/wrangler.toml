@@ -11,11 +11,11 @@ MAIL_TO = "info@hasi-elektronic.de"
 [[d1_databases]]
 binding = "DB"
 database_name = "refakatim"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "43cd294e-a6fe-4dca-ab00-290152510868"
 
 [[kv_namespaces]]
 binding = "RATE"
-id = "REPLACE_WITH_KV_ID"
+id = "7437fc08756e495ea283e774a00cb344"
 
 [[send_email]]
 name = "MAILER"
