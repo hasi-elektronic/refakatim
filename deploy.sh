@@ -24,26 +24,29 @@ step "Token kontrolü"
 { cf "$API/user/tokens/verify" 2>/dev/null || cf "$API/accounts/$ACC/tokens/verify"; } | js 'j.success' | grep -q true || { echo "Token geçersiz"; exit 1; }
 
 step "Email Routing kontrolü ($ZONE_NAME)"
-ZONE_ID=$(cf "$API/zones?name=$ZONE_NAME" | js 'j.result[0]?.id')
-ER=$(cf "$API/zones/$ZONE_ID/email/routing" | js 'j.result?.enabled' || true)
+ZONE_ID=$(cf "$API/zones?name=$ZONE_NAME" 2>/dev/null | js 'j.result[0]?.id' || true)
+ER=$(cf "$API/zones/$ZONE_ID/email/routing" 2>/dev/null | js 'j.result?.enabled' || true)
 [ "$ER" = "true" ] && echo "Email Routing açık" || warn "Email Routing KAPALI → Dashboard > $ZONE_NAME > Email > Email Routing > Enable. Formlar yine D1'e kaydeder."
-VER=$(cf "$API/accounts/$ACC/email/routing/addresses" | js "j.result.find(a=>a.email==='$MAIL_TO')?.verified" || true)
+VER=$(cf "$API/accounts/$ACC/email/routing/addresses" 2>/dev/null | js "j.result.find(a=>a.email==='$MAIL_TO')?.verified" || true)
 [ -n "$VER" ] && echo "$MAIL_TO doğrulanmış" || warn "$MAIL_TO Email Routing'de doğrulanmış hedef değil → Destination addresses > Add + mail'deki linke tıkla."
 
-step "D1 veritabanı"
-D1_ID=$(cf "$API/accounts/$ACC/d1/database?name=$SLUG" | js "j.result.find(d=>d.name==='$SLUG')?.uuid")
-if [ -z "$D1_ID" ]; then D1_ID=$(cf -X POST "$API/accounts/$ACC/d1/database" -d "{\"name\":\"$SLUG\"}" | js 'j.result.uuid'); fi
-echo "D1: $D1_ID"
-
-step "KV namespace (rate limit)"
-KV_ID=$(cf "$API/accounts/$ACC/storage/kv/namespaces?per_page=100" | js "j.result.find(n=>n.title==='$SLUG-rate')?.id")
-if [ -z "$KV_ID" ]; then KV_ID=$(cf -X POST "$API/accounts/$ACC/storage/kv/namespaces" -d "{\"title\":\"$SLUG-rate\"}" | js 'j.result.id'); fi
-echo "KV: $KV_ID"
+step "D1 + KV (wrangler.toml)"
+D1_ID=$(sed -n 's/^database_id = "\(.*\)"/\1/p' worker/wrangler.toml)
+KV_ID=$(sed -n 's/^id = "\(.*\)"/\1/p' worker/wrangler.toml)
+if [ -z "$D1_ID" ] || [ "$D1_ID" = "REPLACE_WITH_D1_ID" ]; then
+  D1_ID=$(cf "$API/accounts/$ACC/d1/database?name=$SLUG" | js "j.result.find(d=>d.name==='$SLUG')?.uuid")
+  [ -n "$D1_ID" ] || D1_ID=$(cf -X POST "$API/accounts/$ACC/d1/database" -d "{\"name\":\"$SLUG\"}" | js 'j.result.uuid')
+fi
+if [ -z "$KV_ID" ] || [ "$KV_ID" = "REPLACE_WITH_KV_ID" ]; then
+  KV_ID=$(cf "$API/accounts/$ACC/storage/kv/namespaces?per_page=100" | js "j.result.find(n=>n.title==='$SLUG-rate')?.id")
+  [ -n "$KV_ID" ] || KV_ID=$(cf -X POST "$API/accounts/$ACC/storage/kv/namespaces" -d "{\"title\":\"$SLUG-rate\"}" | js 'j.result.id')
+fi
+echo "D1: $D1_ID · KV: $KV_ID"
 
 step "Turnstile widget"
-TS_JSON=$(cf "$API/accounts/$ACC/challenges/widgets?per_page=100")
+SITE_KEY=""; TS_SECRET=""
+if TS_JSON=$(cf "$API/accounts/$ACC/challenges/widgets?per_page=100" 2>/dev/null); then
 SITE_KEY=$(echo "$TS_JSON" | js "j.result.find(w=>w.name==='$SLUG')?.sitekey")
-TS_SECRET=""
 if [ -z "$SITE_KEY" ]; then
   NEW=$(cf -X POST "$API/accounts/$ACC/challenges/widgets" -d "{\"name\":\"$SLUG\",\"domains\":[\"$SLUG.pages.dev\",\"localhost\"],\"mode\":\"managed\"}")
   SITE_KEY=$(echo "$NEW" | js 'j.result.sitekey'); TS_SECRET=$(echo "$NEW" | js 'j.result.secret')
@@ -51,14 +54,17 @@ else
   TS_SECRET=$(cf "$API/accounts/$ACC/challenges/widgets/$SITE_KEY" | js 'j.result.secret')
 fi
 echo "Turnstile site key: $SITE_KEY"
+else
+  warn "Token'da Turnstile:Edit yetkisi yok — formlar test modunda yayınlanır."
+fi
 
 step "Worker yapılandırması"
 cd worker
 sed -i.bak -e "s/^database_id = .*/database_id = \"$D1_ID\"/" -e "s/^id = \"REPLACE_WITH_KV_ID\"/id = \"$KV_ID\"/" wrangler.toml && rm -f wrangler.toml.bak
 npm i --silent
-npx wrangler d1 execute "$SLUG" --remote --file=schema.sql -y
+npx wrangler d1 execute "$SLUG" --remote --file=schema.sql -y || warn "Schema uygulanamadı (yetki?) — tablo zaten varsa sorun yok."
 npx wrangler deploy
-printf '%s' "$TS_SECRET" | npx wrangler secret put TURNSTILE_SECRET
+[ -n "$TS_SECRET" ] && printf '%s' "$TS_SECRET" | npx wrangler secret put TURNSTILE_SECRET
 node -e "process.stdout.write(require('crypto').randomBytes(24).toString('hex'))" | npx wrangler secret put IP_SALT
 SUB=$(cf "$API/accounts/$ACC/workers/subdomain" | js 'j.result.subdomain')
 API_URL="https://$SLUG-api.$SUB.workers.dev"
